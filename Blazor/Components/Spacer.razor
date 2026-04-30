@@ -1,0 +1,13 @@
+﻿@namespace ObjectExplorer.Blazor.Components
+
+@if(Level > 0) {
+    <div class="object-explorer-spacer object-explorer-spacer-vertical @(NoHorizontal ? "" : "object-explorer-spacer-horizontal")"></div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public int Level { get; set; }
+
+    [Parameter]
+    public bool NoHorizontal { get; set; } = false;
+}

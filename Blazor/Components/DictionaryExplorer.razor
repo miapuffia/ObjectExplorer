@@ -1,0 +1,76 @@
+﻿@namespace ObjectExplorer.Blazor.Components
+
+<div class="object-explorer-container">
+    <Spacer Level="@Level" />
+    
+    @if(ExploreDictionary.Count() == 0) {
+        <div Class="object-explorer-header object-explorer-header-dictionary">
+            @Name ·
+            <Badge Class="object-explorer-badge object-explorer-badge-dictionary">Dictionary@(DictionaryTypes == null ? "" : "<" + DictionaryTypes.Value.TKey.Name + "," + DictionaryTypes.Value.TValue.Name + ">")</Badge>
+            · (empty)
+        </div>
+    } else {
+        <Button Class="object-explorer-header object-explorer-header-dictionary" @onclick="async () => await collapse.ToggleAsync()">
+            <Icon Name="IconName.ArrowsCollapse" />
+            @Name ·
+            <Badge Class="object-explorer-badge object-explorer-badge-dictionary">Dictionary@(DictionaryTypes == null ? "" : "<" + DictionaryTypes.Value.TKey.Name + "," + DictionaryTypes.Value.TValue.Name + ">")</Badge>
+        </Button>
+        
+        <Collapse @ref="collapse">
+            @{
+                paginationTotalPages = (ExploreDictionary.Count() / ElementsPerPage) + 1;
+
+                if(paginationTotalPages > 1) {
+                    <Spacer Level="@Level" NoHorizontal />
+                    <div class="object-explorer-pagination-container">
+                        <Pagination TotalPages="@paginationTotalPages" DisplayPages="10" PageChanged="OnPageChangedAsync" Size="PaginationSize.Small" FirstLinkIcon="IconName.ChevronDoubleLeft" PreviousLinkIcon="IconName.ChevronLeft" NextLinkIcon="IconName.ChevronRight" LastLinkIcon="IconName.ChevronDoubleRight" />
+                    </div>
+                }
+
+                using(var enumerator = ExploreDictionary.GetEnumerator()) {
+                    int index = 0;
+                    int numElementsThisPage = paginationCurrentPage * ElementsPerPage < ExploreDictionary.Count() ? ElementsPerPage : ExploreDictionary.Count() % ElementsPerPage;
+
+                    enumerator.MoveNext();
+
+                    for(int i = 0; i < (paginationCurrentPage - 1) * ElementsPerPage; i++) {
+                        enumerator.MoveNext();
+                        index++;
+                    }
+
+                    for(int i = 0; i < numElementsThisPage; i++) {
+                        <ObjectExplorer Name="@enumerator.Current.Key.ToString()" ExploreObject="@enumerator.Current.Value" Level="@(Level + 1)" />
+                        enumerator.MoveNext();
+                        index++;
+                    }
+                }
+            }
+        </Collapse>
+    }
+</div>
+
+@code {
+    private Collapse collapse;
+
+    private int paginationCurrentPage = 1;
+    private int paginationTotalPages = 1;
+
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public IDictionary<object, object?> ExploreDictionary { get; set; }
+
+    [Parameter, EditorRequired]
+    public (Type TKey, Type TValue)? DictionaryTypes { get; set; }
+
+    [Parameter, EditorRequired]
+    public int Level { get; set; }
+
+    [Parameter]
+    public int ElementsPerPage { get; set; } = 10;
+
+    private async Task OnPageChangedAsync(int newPageNumber) {
+        paginationCurrentPage = newPageNumber;
+    }
+}

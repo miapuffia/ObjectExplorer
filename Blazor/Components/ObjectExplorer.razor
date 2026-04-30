@@ -1,0 +1,106 @@
+﻿@namespace ObjectExplorer.Blazor.Components
+
+@using System.Collections
+@using System.Reflection
+@using System.Text.Json.Serialization
+
+@if(ExploreObject == null || ExploreObject is string) { //null or string
+    <ValueExplorer Name="@Name" ExploreValue="@ExploreObject" Level="@Level" />
+} else {
+    Type type = ExploreObject.GetType();
+
+    if(type.IsValueType) { //value type including struct
+        <ValueExplorer Name="@Name" ExploreValue="@ExploreObject" Level="@Level" />
+    } else if(type.ImplementsIDictionary) { //dictionary
+        <DictionaryExplorer Name="@Name" ExploreDictionary="@CastDict((IDictionary) ExploreObject).ToDictionary(entry => entry.Key, entry => entry.Value)" DictionaryTypes="@type.GetDictionaryTypes()" Level="@Level" />
+    } else if(type.ImplementsIEnumerable) { //enumerable
+        <EnumerableExplorer Name="@Name" ExploreEnumerable="@CastEnumerable((IEnumerable) ExploreObject).ToArray()" EnumerableType="@type.GetIEnumerableType()" Level="@Level" />
+    } else { //object
+        (string name, object? value)[] propList;
+
+        if(typeof(Exception).IsAssignableFrom(type)) {
+            propList = type
+                .GetProperties()
+                .Where(pi => pi.GetCustomAttribute<JsonIgnoreAttribute>() is null)
+                .Select(uu => (name: uu.Name, value: uu.GetValue(ExploreObject)))
+                .Where(uu => uu.name != nameof(Exception.TargetSite))
+                .ToArray();
+        } else {
+            propList = type
+                .GetProperties()
+                .Where(pi => pi.GetCustomAttribute<JsonIgnoreAttribute>() is null)
+                .Select(uu => (name: uu.Name, value: uu.GetValue(ExploreObject)))
+                .ToArray();
+        }
+
+        if(propList.Length == 0) {
+            <div class="object-explorer-container">
+                <Spacer Level="@Level" />
+                <div Class="object-explorer-header object-explorer-header-object">
+                    @Name ·
+                    <Badge Class="object-explorer-badge object-explorer-badge-object">@type.Name</Badge>
+                    · (empty)
+                </div>
+            </div>
+        } else {
+            <div class="object-explorer-container">
+                <Spacer Level="@Level" />
+
+                <Button Class="object-explorer-header object-explorer-header-object" Style="display: block;" @onclick="async () => await collapse.ToggleAsync()">
+                    <Icon Name="IconName.ArrowsCollapse" />
+                    @Name ·
+                    <Badge Class="object-explorer-badge object-explorer-badge-object">@type.Name</Badge>
+                </Button>
+                
+                <Collapse @ref="collapse">
+                    @foreach(var prop in propList) {
+                        <ObjectExplorer Name="@prop.name" ExploreObject="@prop.value" Level="@(Level + 1)" />
+                    }
+                </Collapse>
+            </div>
+        }
+    }
+}
+
+@code {
+    private Collapse collapse = null!;
+
+    /// <summary>
+    ///     The name of the <see cref="object" /> to be explored.
+    /// </summary>
+    /// <value>
+    ///     A <see cref="string" /> containing the name of the <see cref="object" /> to be explored.
+    /// </value>
+    [Parameter]
+    public string Name { get; set; } = "";
+
+    /// <summary>
+    ///     The <see cref="object" /> to be explored.
+    /// </summary>
+    /// <value>
+    ///     The <see cref="object" /> to be explored.
+    /// </value>
+    [Parameter, EditorRequired]
+    public object? ExploreObject { get; set; } = null;
+
+    /// <summary>
+    ///     The nested depth of the <see cref="object" /> to be explored.
+    /// </summary>
+    /// <value>
+    ///     An <see cref="int" /> containing the nested depth of the <see cref="object" /> to be explored.
+    /// </value>
+    [Parameter]
+    public int Level { get; set; } = 0;
+
+    private static IEnumerable<DictionaryEntry> CastDict(IDictionary dictionary) {
+        foreach(DictionaryEntry entry in dictionary) {
+            yield return entry;
+        }
+    }
+
+    private static IEnumerable<object> CastEnumerable(IEnumerable enumerable) {
+        foreach(var entry in enumerable) {
+            yield return entry;
+        }
+    }
+}

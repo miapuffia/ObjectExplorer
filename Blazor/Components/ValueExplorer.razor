@@ -1,0 +1,46 @@
+﻿@namespace ObjectExplorer.Blazor.Components
+
+@if(ExploreValue == null) { //null
+    <div class="object-explorer-container">
+        <Spacer Level="@Level" />
+        <div Class="object-explorer-header object-explorer-header-object">
+            @Name ·
+            <Badge Class="object-explorer-badge object-explorer-badge-object">null</Badge>
+        </div>
+    </div>
+} else if(ExploreValue is string) { //string
+    <div class="object-explorer-container">
+        <Spacer Level="@Level" />
+        <div Class="object-explorer-header object-explorer-header-string">
+            @Name · @ExploreValue ·
+            <Badge Class="object-explorer-badge object-explorer-badge-string">string</Badge>
+        </div>
+    </div>
+} else if(ExploreValue.GetType().IsPrimitive) { //value stype, not a struct
+    <div class="object-explorer-container">
+        <Spacer Level="@Level" />
+        <div Class="object-explorer-header object-explorer-header-value">
+            @Name · @ExploreValue.ToString() ·
+            <Badge Class="object-explorer-badge object-explorer-badge-value">@ExploreValue.GetType().Name</Badge>
+        </div>
+    </div>
+} else { //struct
+    <div class="object-explorer-container">
+        <Spacer Level="@Level" />
+        <div Class="object-explorer-header object-explorer-header-struct">
+            @Name · @ExploreValue.ToString() ·
+            <Badge Class="object-explorer-badge object-explorer-badge-struct">@ExploreValue.GetType().Name</Badge>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public object? ExploreValue { get; set; }
+
+    [Parameter, EditorRequired]
+    public int Level { get; set; }
+}
