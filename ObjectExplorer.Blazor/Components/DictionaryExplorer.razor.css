@@ -1,0 +1,8 @@
+﻿::deep .object-explorer-header-dictionary {
+    background-color: color-mix(in lab, orangered 10%, white 100%) !important;
+}
+
+::deep div .object-explorer-badge-dictionary {
+    color: orangered !important;
+    outline: 2px solid orangered;
+}

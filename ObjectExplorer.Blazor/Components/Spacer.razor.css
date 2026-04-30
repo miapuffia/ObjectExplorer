@@ -1,0 +1,25 @@
+﻿::deep .object-explorer-spacer {
+    position: relative;
+    display: table-cell;
+    width: 50px;
+}
+
+::deep .object-explorer-spacer-vertical::before {
+    content: "";
+    top: 0px;
+    bottom: 0px;
+    right: 25px;
+    width: 1px;
+    background-color: grey;
+    position: absolute;
+}
+
+::deep .object-explorer-spacer-horizontal::after {
+    content: "";
+    top: 15px;
+    height: 1px;
+    right: 0px;
+    width: 25px;
+    background-color: grey;
+    position: absolute;
+}

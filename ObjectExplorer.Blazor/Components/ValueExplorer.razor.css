@@ -1,0 +1,35 @@
+﻿::deep .object-explorer-header-object {
+    background-color: color-mix(in lab, purple 10%, white 100%) !important;
+}
+
+::deep .object-explorer-header-struct {
+    background-color: color-mix(in lab, blue 10%, white 100%) !important;
+}
+
+::deep .object-explorer-header-string {
+    background-color: color-mix(in lab, darkorange 10%, white 100%) !important;
+}
+
+::deep .object-explorer-header-value {
+    background-color: color-mix(in lab, black 8%, white 100%) !important;
+}
+
+::deep div .object-explorer-badge-object {
+    color: purple !important;
+    outline: 2px solid purple;
+}
+
+::deep div .object-explorer-badge-struct {
+    color: blue !important;
+    outline: 2px solid blue;
+}
+
+::deep div .object-explorer-badge-string {
+    color: darkorange !important;
+    outline: 2px solid darkorange;
+}
+
+::deep div .object-explorer-badge-value {
+    color: black !important;
+    outline: 2px solid black;
+}

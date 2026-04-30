@@ -1,0 +1,34 @@
+﻿.object-explorer-container {
+    display: table;
+}
+
+.object-explorer-header {
+    border: none !important;
+    padding: 0.2rem 0.4rem !important;
+    margin: 0.1rem 0px;
+    border-radius: var(--bs-border-radius);
+}
+
+div .object-explorer-badge {
+    background-color: unset !important;
+    outline-offset: -2px;
+}
+
+.collapse > .object-explorer-container:last-child > .object-explorer-spacer-vertical::before {
+    top: 0px;
+    height: 15px;
+}
+
+.object-explorer-pagination-container {
+    display: table-cell;
+}
+
+.object-explorer-pagination-container .collapsing {
+    -webkit-transition: none !important;
+    transition: none !important;
+    display: none !important;
+}
+
+.object-explorer-pagination-container .pagination {
+    margin-bottom: 0px !important;
+}
