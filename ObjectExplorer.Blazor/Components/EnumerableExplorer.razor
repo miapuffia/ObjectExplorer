@@ -3,42 +3,42 @@
 <div class="object-explorer-container">
     <Spacer Level="@Level" />
 
-    @if(ExploreEnumerable.Count() == 0) {
+    @if(!ExploreEnumerable.Any()) {
         <div Class="object-explorer-header object-explorer-header-enumerable">
             @Name ·
             <Badge Class="object-explorer-badge object-explorer-badge-enumerable">Enumerable@(EnumerableType == null ? "" : "<" + EnumerableType.Name + ">")</Badge>
             · (empty)
         </div>
     } else {
-        <Button Class="object-explorer-header object-explorer-header-enumerable" @onclick="async () => await collapse.ToggleAsync()">
+        <Button Class="object-explorer-header object-explorer-header-enumerable" @onclick="async () => await _collapse!.ToggleAsync()">
             <Icon Name="IconName.ArrowsCollapse" />
             @Name ·
             <Badge Class="object-explorer-badge object-explorer-badge-enumerable">Enumerable@(EnumerableType == null ? "" : "<" + EnumerableType.Name + ">")</Badge>
         </Button>
 
-        <Collapse @ref="collapse">
+        <Collapse @ref="_collapse">
             @{
-                paginationTotalPages = (ExploreEnumerable.Count() / ElementsPerPage) + 1;
+                _paginationTotalPages = (ExploreEnumerable.Count() / ElementsPerPage) + 1;
 
-                if(paginationTotalPages > 1) {
+                if(_paginationTotalPages > 1) {
                     <Spacer Level="@Level" NoHorizontal />
                     <div class="object-explorer-pagination-container">
-                        <Pagination TotalPages="@paginationTotalPages" DisplayPages="10" PageChanged="OnPageChangedAsync" Size="PaginationSize.Small" FirstLinkIcon="IconName.ChevronDoubleLeft" PreviousLinkIcon="IconName.ChevronLeft" NextLinkIcon="IconName.ChevronRight" LastLinkIcon="IconName.ChevronDoubleRight" />
+                        <Pagination TotalPages="@_paginationTotalPages" DisplayPages="10" PageChanged="OnPageChangedAsync" Size="PaginationSize.Small" FirstLinkIcon="IconName.ChevronDoubleLeft" PreviousLinkIcon="IconName.ChevronLeft" NextLinkIcon="IconName.ChevronRight" LastLinkIcon="IconName.ChevronDoubleRight" />
                     </div>
                 }
 
                 using(var enumerator = ExploreEnumerable.GetEnumerator()) {
-                    int index = 0;
-                    int numElementsThisPage = paginationCurrentPage * ElementsPerPage < ExploreEnumerable.Count() ? ElementsPerPage : ExploreEnumerable.Count() % ElementsPerPage;
+                    var index = 0;
+                    var numElementsThisPage = _paginationCurrentPage * ElementsPerPage < ExploreEnumerable.Count() ? ElementsPerPage : ExploreEnumerable.Count() % ElementsPerPage;
 
                     enumerator.MoveNext();
 
-                    for(int i = 0; i < (paginationCurrentPage - 1) * ElementsPerPage; i++) {
+                    for(var i = 0; i < (_paginationCurrentPage - 1) * ElementsPerPage; i++) {
                         enumerator.MoveNext();
                         index++;
                     }
 
-                    for(int i = 0; i < numElementsThisPage; i++) {
+                    for(var i = 0; i < numElementsThisPage; i++) {
                         <ObjectExplorer Name="@index.ToString()" ExploreObject="enumerator.Current" Level="@(Level + 1)" />
                         enumerator.MoveNext();
                         index++;
@@ -50,10 +50,10 @@
 </div>
 
 @code {
-    private Collapse collapse = null!;
+    private Collapse? _collapse;
 
-    private int paginationCurrentPage = 1;
-    private int paginationTotalPages = 1;
+    private int _paginationCurrentPage = 1;
+    private int _paginationTotalPages = 1;
 
     [Parameter, EditorRequired]
     public string Name { get; set; } = "";
@@ -70,7 +70,7 @@
     [Parameter]
     public int ElementsPerPage { get; set; } = 10;
 
-    private async Task OnPageChangedAsync(int newPageNumber) {
-        paginationCurrentPage = newPageNumber;
+    private void OnPageChangedAsync(int newPageNumber) {
+        _paginationCurrentPage = newPageNumber;
     }
 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyTitle>ObjectExplorer</AssemblyTitle>
@@ -18,12 +18,21 @@
     <PackageProjectUrl>https://github.com/miapuffia/ObjectExplorer</PackageProjectUrl>
     <RepositoryUrl>https://github.com/miapuffia/ObjectExplorer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>blazor;json;string;object</PackageTags>
+    <PackageTags>json;string;object</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blazor.Bootstrap" Version="3.5.0" />
-    <PackageReference Include="NodaTime" Version="3.2.3" />
+    <None Update="LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

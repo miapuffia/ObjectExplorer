@@ -1,8 +1,4 @@
-﻿// <copyright file="IndentationStyle.cs" company="Air Line Pilots Association">
-// Copyright (c) Air Line Pilots Association. All rights reserved.
-// </copyright>
-
-namespace ObjectExplorer.PrettyString;
+﻿namespace ObjectExplorer.PrettyString;
 
 /// <summary>
 ///     Specifies PrettyString indentation style options.

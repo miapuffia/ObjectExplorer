@@ -1,41 +1,44 @@
-﻿// <copyright file="TypeExtensions.cs" company="Air Line Pilots Association">
-// Copyright (c) Air Line Pilots Association. All rights reserved.
-// </copyright>
-
-namespace ObjectExplorer.Extensions;
+﻿namespace ObjectExplorer.Extensions;
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 ///     Provides extension methods for working with <see langword="Type" /> values.
 /// </summary>
-public static class TypeExtensions
-{
+public static class TypeExtensions {
     /// <param name="type">The Type to examine.</param>
-    extension(Type type)
-    {
+    extension(Type type) {
         /// <summary>
         ///     Gets a value indicating whether a <see cref="Type" /> implements the <see cref="IEnumerable" /> interface.
         /// </summary>
         /// <returns>
-        ///     <see langword="true" /> if <paramref name="type" /> implements <see cref="IEnumerable" />; otherwise, <see langword="false" />.
+        ///     <see langword="true" /> if <paramref name="type" /> implements <see cref="IEnumerable" />; otherwise,
+        ///     <see langword="false" />.
         /// </returns>
-        public bool ImplementsIEnumerable => type.GetInterfaces().Append(type).Any(x => x == typeof(IEnumerable) || (x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)));
+        public bool ImplementsIEnumerable => type.GetInterfaces().Append(type)
+                                                 .Any(x => x == typeof(IEnumerable) || (x.IsGenericType &&
+                                                                                        x.GetGenericTypeDefinition() == typeof(IEnumerable<>)));
 
         /// <summary>
         ///     Gets a value indicating whether a <see cref="Type" /> implements the <see cref="IDictionary" /> interface.
         /// </summary>
         /// <returns>
-        ///     <see langword="true" /> if <paramref name="type" /> implements <see cref="IDictionary" />; otherwise, <see langword="false" />.
+        ///     <see langword="true" /> if <paramref name="type" /> implements <see cref="IDictionary" />; otherwise,
+        ///     <see langword="false" />.
         /// </returns>
-        public bool ImplementsIDictionary => type.GetInterfaces().Append(type).Any(x => x == typeof(IDictionary) || (x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IDictionary<,>)));
+        public bool ImplementsIDictionary => type.GetInterfaces().Append(type)
+                                                 .Any(x => x == typeof(IDictionary) || (x.IsGenericType &&
+                                                                                        x.GetGenericTypeDefinition() == typeof(IDictionary<,>)));
 
         /// <summary>
         ///     Gets the <see cref="Type" /> of a generic <see cref="IEnumerable" />.
         /// </summary>
         /// <returns>
-        ///     Generic <see cref="Type" /> if <paramref name="type" /> implements generic <see cref="IEnumerable" />; otherwise <see langword="null" />.
+        ///     Generic <see cref="Type" /> if <paramref name="type" /> implements generic <see cref="IEnumerable" />; otherwise
+        ///     <see langword="null" />.
         /// </returns>
         public Type? GetIEnumerableType() {
             // Type is Array
@@ -49,11 +52,11 @@ public static class TypeExtensions
 
             // type implements/extends IEnumerable<T>;
             var enumType = type.GetInterfaces()
-                                    .Where(t => t.IsGenericType &&
+                               .Where(t => t.IsGenericType &&
                                            t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                                    .Select(t => t.GenericTypeArguments[0]).FirstOrDefault();
+                               .Select(t => t.GenericTypeArguments[0]).FirstOrDefault();
 
-            if(enumType == default) {
+            if(enumType == null) {
                 return null;
             }
 
@@ -64,7 +67,8 @@ public static class TypeExtensions
         ///     Gets the <see cref="Type">Types</see> of a generic <see cref="IDictionary" />.
         /// </summary>
         /// <returns>
-        ///     <see cref="Tuple" />&lt;<see cref="Type">TKey</see>,<see cref="Type">TValue</see>&gt; if <paramref name="type" /> implements generic <see cref="IDictionary" />; otherwise <see langword="null" />.
+        ///     <see cref="Tuple" />&lt;<see cref="Type">TKey</see>,<see cref="Type">TValue</see>&gt; if <paramref name="type" />
+        ///     implements generic <see cref="IDictionary" />; otherwise <see langword="null" />.
         /// </returns>
         public (Type TKey, Type TValue)? GetDictionaryTypes() {
             // type is IDictionary<T,V>;
@@ -73,9 +77,9 @@ public static class TypeExtensions
 
             // type implements/extends IDictionary<T>;
             var enumType = type.GetInterfaces()
-                                    .Where(t => t.IsGenericType &&
+                               .Where(t => t.IsGenericType &&
                                            t.GetGenericTypeDefinition() == typeof(IDictionary<,>))
-                                    .Select(t => (t.GenericTypeArguments[0], t.GenericTypeArguments[1])).FirstOrDefault();
+                               .Select(t => (t.GenericTypeArguments[0], t.GenericTypeArguments[1])).FirstOrDefault();
 
             if(enumType == default) {
                 return null;

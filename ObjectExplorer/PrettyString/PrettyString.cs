@@ -1,10 +1,9 @@
-﻿// <copyright file="PrettyString.cs" company="Air Line Pilots Association">
-// Copyright (c) Air Line Pilots Association. All rights reserved.
-// </copyright>
+﻿namespace ObjectExplorer.PrettyString;
 
-namespace ObjectExplorer.PrettyString;
-
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;

@@ -1,6 +1,6 @@
 ﻿@namespace ObjectExplorer.Blazor.Components
 
-@if(ExploreValue == null) { //null
+@if(ExploreValue is null) { //null
     <div class="object-explorer-container">
         <Spacer Level="@Level" />
         <div Class="object-explorer-header object-explorer-header-object">
@@ -16,7 +16,7 @@
             <Badge Class="object-explorer-badge object-explorer-badge-string">string</Badge>
         </div>
     </div>
-} else if(ExploreValue.GetType().IsPrimitive) { //value stype, not a struct
+} else if(ExploreValue.GetType().IsPrimitive) { //value type, not a struct
     <div class="object-explorer-container">
         <Spacer Level="@Level" />
         <div Class="object-explorer-header object-explorer-header-value">

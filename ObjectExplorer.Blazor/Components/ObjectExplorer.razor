@@ -4,10 +4,10 @@
 @using System.Reflection
 @using System.Text.Json.Serialization
 
-@if(ExploreObject == null || ExploreObject is string) { //null or string
+@if(ExploreObject is null or string) { //null or string
     <ValueExplorer Name="@Name" ExploreValue="@ExploreObject" Level="@Level" />
 } else {
-    Type type = ExploreObject.GetType();
+    var type = ExploreObject.GetType();
 
     if(type.IsValueType) { //value type including struct
         <ValueExplorer Name="@Name" ExploreValue="@ExploreObject" Level="@Level" />
@@ -46,13 +46,13 @@
             <div class="object-explorer-container">
                 <Spacer Level="@Level" />
 
-                <Button Class="object-explorer-header object-explorer-header-object" Style="display: block;" @onclick="async () => await collapse.ToggleAsync()">
+                <Button Class="object-explorer-header object-explorer-header-object" Style="display: block;" @onclick="async () => await _collapse!.ToggleAsync()">
                     <Icon Name="IconName.ArrowsCollapse" />
                     @Name ·
                     <Badge Class="object-explorer-badge object-explorer-badge-object">@type.Name</Badge>
                 </Button>
                 
-                <Collapse @ref="collapse">
+                <Collapse @ref="_collapse">
                     @foreach(var prop in propList) {
                         <ObjectExplorer Name="@prop.name" ExploreObject="@prop.value" Level="@(Level + 1)" />
                     }
@@ -63,7 +63,7 @@
 }
 
 @code {
-    private Collapse collapse = null!;
+    private Collapse? _collapse;
 
     /// <summary>
     ///     The name of the <see cref="object" /> to be explored.
