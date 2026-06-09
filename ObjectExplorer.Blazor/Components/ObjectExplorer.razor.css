@@ -2,7 +2,7 @@
     background-color: color-mix(in lab, purple 10%, white 100%) !important;
 }
 
-::deep div .object-explorer-badge-object {
+::deep .object-explorer-badge-object {
     color: purple !important;
     outline: 2px solid purple;
 }

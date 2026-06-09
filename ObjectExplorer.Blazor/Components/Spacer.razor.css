@@ -1,10 +1,10 @@
-﻿::deep .object-explorer-spacer {
+﻿::deep.object-explorer-spacer {
     position: relative;
     display: table-cell;
     width: 50px;
 }
 
-::deep .object-explorer-spacer-vertical::before {
+::deep.object-explorer-spacer-vertical::before {
     content: "";
     top: 0px;
     bottom: 0px;
@@ -14,7 +14,7 @@
     position: absolute;
 }
 
-::deep .object-explorer-spacer-horizontal::after {
+::deep.object-explorer-spacer-horizontal::after {
     content: "";
     top: 15px;
     height: 1px;

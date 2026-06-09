@@ -14,22 +14,22 @@
     background-color: color-mix(in lab, black 8%, white 100%) !important;
 }
 
-::deep div .object-explorer-badge-object {
+::deep .object-explorer-badge-object {
     color: purple !important;
     outline: 2px solid purple;
 }
 
-::deep div .object-explorer-badge-struct {
+::deep .object-explorer-badge-struct {
     color: blue !important;
     outline: 2px solid blue;
 }
 
-::deep div .object-explorer-badge-string {
+::deep .object-explorer-badge-string {
     color: darkorange !important;
     outline: 2px solid darkorange;
 }
 
-::deep div .object-explorer-badge-value {
+::deep .object-explorer-badge-value {
     color: black !important;
     outline: 2px solid black;
 }

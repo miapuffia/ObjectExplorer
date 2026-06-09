@@ -2,7 +2,7 @@
     background-color: color-mix(in lab, green 15%, white 100%) !important;
 }
 
-::deep div .object-explorer-badge-enumerable {
+::deep .object-explorer-badge-enumerable {
     color: green !important;
     outline: 2px solid green;
 }
