@@ -1,5 +1,7 @@
 ﻿namespace ObjectExplorer.PrettyString;
 
+using Extensions;
+using Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,8 +10,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Extensions;
-using Json;
 
 /// <summary>
 ///     Provides static methods to convert any object into a readable string.
@@ -39,36 +39,26 @@ public static class PrettyString {
     /// <param name="indentationStyle">Optional indentation style options.</param>
     /// <returns>A <see cref="string" /> representation of <paramref name="argument" />.</returns>
     public static string Stringify(object? argument,
-                                   IndentationStyle indentationStyle = IndentationStyle.NoIndentation) {
+                                   IndentationStyle indentationStyle = IndentationStyle.NoIndentation,
+                                   int maxDepth = 64) {
+        var referenceStack = new Stack<object>();
         var stringBuilder = new StringBuilder();
-        Stringify(argument, indentationStyle, 0, stringBuilder);
+
+        Stringify(argument, indentationStyle, 0, stringBuilder, referenceStack, maxDepth);
         return stringBuilder.ToString();
-    }
-
-    private static IEnumerable<DictionaryEntry> CastDict(IDictionary dictionary) {
-        foreach(DictionaryEntry entry in dictionary) {
-            yield return entry;
-        }
-    }
-
-    private static IEnumerable<object> CastEnumerable(IEnumerable enumerable) {
-        foreach(var entry in enumerable) {
-            yield return entry;
-        }
-    }
-
-    private static bool ShouldBeIndented(object? argument) {
-        if(argument is null or string) {
-            return false;
-        }
-
-        return !argument.GetType().IsValueType;
     }
 
     private static void Stringify(object? argument,
                                   IndentationStyle indentationStyle,
                                   int indentationLevel,
-                                  StringBuilder stringBuilder) {
+                                  StringBuilder stringBuilder,
+                                  Stack<object> referenceStack,
+                                  int maxDepth) {
+        if(indentationLevel > maxDepth) {
+            stringBuilder.Append($"max depth of {maxDepth} reached");
+            return;
+        }
+
         switch(argument) {
             case null:
                 stringBuilder.Append("null");
@@ -81,152 +71,247 @@ public static class PrettyString {
         var type = argument.GetType();
 
         if(type.IsValueType) {
-            stringBuilder.Append(argument.ToString() ?? string.Empty);
+            if(type.IsPrimitive) {
+                stringBuilder.Append(argument);
+                return;
+            }
+
+            if(type.IsEnum) {
+                stringBuilder.Append(argument);
+                return;
+            }
+
+            if(type == typeof(DateTime)) {
+                stringBuilder.Append(argument);
+                return;
+            }
+
+            StringifyObject(argument, indentationStyle, indentationLevel, stringBuilder, referenceStack, maxDepth);
             return;
         }
 
         if(type.ImplementsIDictionary) {
-            StringifyDictionary(argument, indentationStyle, indentationLevel, stringBuilder);
+            StringifyDictionary(argument, indentationStyle, indentationLevel, stringBuilder, referenceStack, maxDepth);
             return;
         }
 
         if(type.ImplementsIEnumerable) {
-            StringifyEnumerable(argument, indentationStyle, indentationLevel, stringBuilder);
+            StringifyEnumerable(argument, indentationStyle, indentationLevel, stringBuilder, referenceStack, maxDepth);
             return;
         }
 
-        StringifyObject(argument, indentationStyle, indentationLevel, stringBuilder);
+        StringifyObject(argument, indentationStyle, indentationLevel, stringBuilder, referenceStack, maxDepth);
     }
 
     private static void StringifyDictionary(object argument,
                                             IndentationStyle indentationStyle,
                                             int indentationLevel,
-                                            StringBuilder stringBuilder) {
-        var dictionary = CastDict((IDictionary)argument).ToDictionary(entry => entry.Key, entry => entry.Value);
+                                            StringBuilder stringBuilder, Stack<object> referenceStack,
+                                            int maxDepth) {
+        //Ensure argument isn't in the reference stack
+        if(referenceStack.Any(r => ReferenceEquals(r, argument))) {
+            stringBuilder.Append(argument.GetType().Name);
+            stringBuilder.Append(" (skipped)");
+            return;
+        }
+
+        var dictionary = TypeUtils.CastDict((IDictionary)argument).ToDictionary(entry => entry.Key, entry => entry.Value);
 
         if(dictionary.Count == 0) {
             stringBuilder.Append("{ }");
             return;
         }
 
-        var hadLineBreak = false;
+        referenceStack.Push(argument);
 
-        stringBuilder.Append("{ ");
+        var isAtStartOfLine = false;
+        var hadAnyLineBreaks = false;
+
+        stringBuilder.Append('{');
 
         foreach(var kvp in dictionary) {
             if(indentationStyle == IndentationStyle.IndentNestedValues ||
-               (indentationStyle == IndentationStyle.IndentNestedObjects && ShouldBeIndented(kvp.Value))) {
+               (indentationStyle == IndentationStyle.IndentNestedObjects && TypeUtils.ShouldBeIndented(kvp.Value))) {
                 stringBuilder.Append('\n');
                 stringBuilder.Append(new string(' ', (indentationLevel + 1) * 4));
-                hadLineBreak = true;
+
+                isAtStartOfLine = true;
+                hadAnyLineBreaks = true;
+            }
+
+            if(!isAtStartOfLine) {
+                stringBuilder.Append(' ');
             }
 
             stringBuilder.Append("[ ");
             stringBuilder.Append(kvp.Key);
             stringBuilder.Append(" ] = ");
-            Stringify(kvp.Value, indentationStyle, indentationLevel + 1, stringBuilder);
-            stringBuilder.Append(", ");
+            Stringify(kvp.Value, indentationStyle, indentationLevel + 1, stringBuilder, referenceStack, maxDepth);
+            stringBuilder.Append(',');
+
+            isAtStartOfLine = false;
         }
 
-        stringBuilder.Length -= 2;
+        stringBuilder.Length--;
 
-        if(!hadLineBreak) {
+        if(!hadAnyLineBreaks) {
             stringBuilder.Append(" }");
         } else {
             stringBuilder.Append('\n');
             stringBuilder.Append(new string(' ', indentationLevel * 4));
             stringBuilder.Append('}');
         }
+
+        //Remove argument and subsequent items from reference stack
+        object stackItem;
+
+        do {
+            stackItem = referenceStack.Pop();
+        } while(!ReferenceEquals(argument, stackItem));
     }
 
     private static void StringifyEnumerable(object argument,
                                             IndentationStyle indentationStyle,
                                             int indentationLevel,
-                                            StringBuilder stringBuilder) {
-        var enumerable = CastEnumerable((IEnumerable)argument);
+                                            StringBuilder stringBuilder,
+                                            Stack<object> referenceStack,
+                                            int maxDepth) {
+        //Ensure argument isn't in the reference stack
+        if(referenceStack.Any(r => ReferenceEquals(r, argument))) {
+            stringBuilder.Append(argument.GetType().Name);
+            stringBuilder.Append(" (skipped)");
+            return;
+        }
 
-        var hadLineBreak = false;
+        referenceStack.Push(argument);
 
-        stringBuilder.Append("[  ");
+        var enumerable = TypeUtils.CastEnumerable((IEnumerable)argument);
+
+        var isAtStartOfLine = false;
+        var hadAnyLineBreaks = false;
+        var wasEmpty = true;
+
+        stringBuilder.Append('[');
 
         foreach(var element in enumerable) {
             if(indentationStyle == IndentationStyle.IndentNestedValues ||
-               (indentationStyle == IndentationStyle.IndentNestedObjects && ShouldBeIndented(element))) {
+               (indentationStyle == IndentationStyle.IndentNestedObjects && TypeUtils.ShouldBeIndented(element))) {
                 stringBuilder.Append('\n');
                 stringBuilder.Append(new string(' ', (indentationLevel + 1) * 4));
-                hadLineBreak = true;
+
+                isAtStartOfLine = true;
+                hadAnyLineBreaks = true;
             }
 
-            Stringify(element, indentationStyle, indentationLevel + 1, stringBuilder);
-            stringBuilder.Append(", ");
+            if(!isAtStartOfLine) {
+                stringBuilder.Append(' ');
+            }
+            
+            Stringify(element, indentationStyle, indentationLevel + 1, stringBuilder, referenceStack, maxDepth);
+            stringBuilder.Append(',');
+
+            wasEmpty = false;
+            isAtStartOfLine = false;
         }
 
-        stringBuilder.Length -= 2;
+        if(!wasEmpty) {
+            stringBuilder.Length--;
+        }
 
-        if(!hadLineBreak) {
+        if(!hadAnyLineBreaks) {
             stringBuilder.Append(" ]");
         } else {
             stringBuilder.Append('\n');
             stringBuilder.Append(new string(' ', indentationLevel * 4));
             stringBuilder.Append(']');
         }
+        
+        //Remove argument and subsequent items from reference stack
+        object stackItem;
+
+        do {
+            stackItem = referenceStack.Pop();
+        } while(!ReferenceEquals(argument, stackItem));
     }
 
     private static void StringifyObject(object argument,
                                         IndentationStyle indentationStyle,
                                         int indentationLevel,
-                                        StringBuilder stringBuilder) {
+                                        StringBuilder stringBuilder,
+                                        Stack<object> referenceStack,
+                                        int maxDepth) {
         var type = argument.GetType();
+
+        //Ensure argument isn't in the reference stack
+        if(!type.IsValueType && referenceStack.Any(r => ReferenceEquals(r, argument))) {
+            stringBuilder.Append(type.Name);
+            stringBuilder.Append(" (skipped)");
+            return;
+        }
+
+        if(type.Name is "RuntimeType" or "Type") {
+            stringBuilder.Append("Type (");
+            stringBuilder.Append(type.Name);
+            stringBuilder.Append(')');
+            return;
+        }
 
         stringBuilder.Append(type.Name);
 
-        (string name, object? value)[] propList;
-
-        if(typeof(Exception).IsAssignableFrom(type)) {
-            propList = type
-                       .GetProperties()
-                       .Where(pi => pi.GetCustomAttribute<JsonIgnoreAttribute>() is null)
-                       .Select(uu => (name: uu.Name, value: uu.GetValue(argument)))
-                       .Where(uu => uu.name != nameof(Exception.TargetSite))
-                       .ToArray();
-        } else {
-            propList = type
-                       .GetProperties()
-                       .Where(pi => pi.GetCustomAttribute<JsonIgnoreAttribute>() is null)
-                       .Select(uu => (name: uu.Name, value: uu.GetValue(argument)))
-                       .ToArray();
-        }
+        var propList = TypeUtils.GetProperties(argument, type);
 
         if(propList.Length == 0) {
             return;
         }
 
-        var hadLineBreak = false;
+        if(!type.IsValueType) {
+            referenceStack.Push(argument);
+        }
 
-        stringBuilder.Append(" { ");
+        var isAtStartOfLine = false;
+        var hadAnyLineBreaks = false;
+
+        stringBuilder.Append(" {");
 
         foreach(var prop in propList) {
             if(indentationStyle == IndentationStyle.IndentNestedValues ||
-               (indentationStyle == IndentationStyle.IndentNestedObjects && ShouldBeIndented(prop.value))) {
+               (indentationStyle == IndentationStyle.IndentNestedObjects && TypeUtils.ShouldBeIndented(prop.property))) {
                 stringBuilder.Append('\n');
                 stringBuilder.Append(new string(' ', (indentationLevel + 1) * 4));
-                hadLineBreak = true;
+
+                isAtStartOfLine = true;
+                hadAnyLineBreaks = true;
+            }
+
+            if(!isAtStartOfLine) {
+                stringBuilder.Append(' ');
             }
 
             stringBuilder.Append(prop.name);
             stringBuilder.Append(" = ");
-            Stringify(prop.value, indentationStyle, indentationLevel + 1, stringBuilder);
-            stringBuilder.Append(", ");
+            Stringify(prop.property, indentationStyle, indentationLevel + 1, stringBuilder, referenceStack, maxDepth);
+            stringBuilder.Append(',');
+            
+            isAtStartOfLine = false;
         }
 
-        stringBuilder.Length -= 2;
+        stringBuilder.Length--;
 
-        if(!hadLineBreak) {
+        if(!hadAnyLineBreaks) {
             stringBuilder.Append(" }");
         } else {
             stringBuilder.Append('\n');
             stringBuilder.Append(new string(' ', indentationLevel * 4));
             stringBuilder.Append('}');
+        }
+        
+        //Remove argument and subsequent items from reference stack
+        if(!type.IsValueType) {
+            object stackItem;
+
+            do {
+                stackItem = referenceStack.Pop();
+            } while(!ReferenceEquals(argument, stackItem));
         }
     }
 }

@@ -12,26 +12,11 @@
     if(type.IsValueType) { //value type including struct
         <ValueExplorer Name="@Name" ExploreValue="@ExploreObject" Level="@Level" />
     } else if(type.ImplementsIDictionary) { //dictionary
-        <DictionaryExplorer Name="@Name" ExploreDictionary="@CastDict((IDictionary) ExploreObject).ToDictionary(entry => entry.Key, entry => entry.Value)" DictionaryTypes="@type.GetDictionaryTypes()" Level="@Level" />
+        <DictionaryExplorer Name="@Name" ExploreDictionary="@PrettyString.TypeUtils.CastDict((IDictionary) ExploreObject).ToDictionary(entry => entry.Key, entry => entry.Value)" DictionaryTypes="@type.GetDictionaryTypes()" Level="@Level" />
     } else if(type.ImplementsIEnumerable) { //enumerable
-        <EnumerableExplorer Name="@Name" ExploreEnumerable="@CastEnumerable((IEnumerable) ExploreObject).ToArray()" EnumerableType="@type.GetIEnumerableType()" Level="@Level" />
+        <EnumerableExplorer Name="@Name" ExploreEnumerable="@PrettyString.TypeUtils.CastEnumerable((IEnumerable) ExploreObject).ToArray()" EnumerableType="@type.GetEnumerableType()" Level="@Level" />
     } else { //object
-        (string name, object? value)[] propList;
-
-        if(typeof(Exception).IsAssignableFrom(type)) {
-            propList = type
-                .GetProperties()
-                .Where(pi => pi.GetCustomAttribute<JsonIgnoreAttribute>() is null)
-                .Select(uu => (name: uu.Name, value: uu.GetValue(ExploreObject)))
-                .Where(uu => uu.name != nameof(Exception.TargetSite))
-                .ToArray();
-        } else {
-            propList = type
-                .GetProperties()
-                .Where(pi => pi.GetCustomAttribute<JsonIgnoreAttribute>() is null)
-                .Select(uu => (name: uu.Name, value: uu.GetValue(ExploreObject)))
-                .ToArray();
-        }
+        (string name, object? value)[] propList = PrettyString.TypeUtils.GetProperties(ExploreObject, type);
 
         if(propList.Length == 0) {
             <div class="object-explorer-container">
@@ -91,16 +76,4 @@
     /// </value>
     [Parameter]
     public int Level { get; set; } = 0;
-
-    private static IEnumerable<DictionaryEntry> CastDict(IDictionary dictionary) {
-        foreach(DictionaryEntry entry in dictionary) {
-            yield return entry;
-        }
-    }
-
-    private static IEnumerable<object> CastEnumerable(IEnumerable enumerable) {
-        foreach(var entry in enumerable) {
-            yield return entry;
-        }
-    }
 }

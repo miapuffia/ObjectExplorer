@@ -26,7 +26,10 @@
 
   <ItemGroup>
     <PackageReference Include="Blazor.Bootstrap" Version="3.5.0" />
-    <PackageReference Include="Miapuffia.ObjectExplorer" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ObjectExplorer\ObjectExplorer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

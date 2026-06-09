@@ -40,7 +40,7 @@ public static class TypeExtensions {
         ///     Generic <see cref="Type" /> if <paramref name="type" /> implements generic <see cref="IEnumerable" />; otherwise
         ///     <see langword="null" />.
         /// </returns>
-        public Type? GetIEnumerableType() {
+        public Type? GetEnumerableType() {
             // Type is Array
             // short-circuit if you expect lots of arrays
             if(type.IsArray)
@@ -56,11 +56,7 @@ public static class TypeExtensions {
                                            t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                                .Select(t => t.GenericTypeArguments[0]).FirstOrDefault();
 
-            if(enumType == null) {
-                return null;
-            }
-
-            return enumType ?? type;
+            return enumType;
         }
 
         /// <summary>
